@@ -1,6 +1,6 @@
 # FirstClub Membership System Backend
 
-A robust, LLD-friendly backend system for the FirstClub tiered membership program, built with **Java 23** and **Spring Boot 3.2.x**.
+A robust, backend system for the FirstClub tiered membership program, built with **Java ** and **Spring Boot 3.2**.
 
 This application demonstrates strong Object-Oriented Programming (OOP) and SOLID principles, utilizing the **Strategy Pattern** for tier eligibility, **Optimistic Locking** for concurrency, and a **Rich Domain Model** for encapsulation.
 
