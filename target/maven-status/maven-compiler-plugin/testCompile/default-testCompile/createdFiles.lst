@@ -1,0 +1,5 @@
+com/firstclub/membership/service/MembershipCatalogServiceTest.class
+com/firstclub/membership/strategy/CohortStrategyTest.class
+com/firstclub/membership/service/SubscriptionServiceTest.class
+com/firstclub/membership/strategy/OrderCountStrategyTest.class
+com/firstclub/membership/strategy/OrderValueStrategyTest.class

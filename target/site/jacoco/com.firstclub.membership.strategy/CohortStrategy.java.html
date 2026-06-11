@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CohortStrategy.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">membership</a> &gt; <a href="index.source.html" class="el_package">com.firstclub.membership.strategy</a> &gt; <span class="el_source">CohortStrategy.java</span></div><h1>CohortStrategy.java</h1><pre class="source lang-java linenums">package com.firstclub.membership.strategy;
+
+import com.firstclub.membership.entity.Tier;
+import com.firstclub.membership.entity.User;
+import org.springframework.stereotype.Component;
+
+/**
+ * Strategy to evaluate if a user belongs to the required cohort for a specific tier.
+ */
+@Component
+<span class="fc" id="L11">public class CohortStrategy implements TierEvaluationStrategy {</span>
+
+    /**
+     * Determines eligibility based on the user's cohort matching the tier's required cohort.
+     *
+     * @param user the user being evaluated
+     * @param tier the tier being checked
+     * @return true if the tier has no cohort restriction, or if the user's cohort matches the tier's required cohort.
+     */
+    @Override
+    public boolean isEligible(User user, Tier tier) {
+<span class="fc bfc" id="L22" title="All 2 branches covered.">        if (tier.getAllowedCohort() == null) {</span>
+<span class="fc" id="L23">            return true;</span>
+        }
+<span class="fc" id="L25">        return tier.getAllowedCohort().equalsIgnoreCase(user.getCohortType());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

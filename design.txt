@@ -1,0 +1,46 @@
+# Membership Program - Design and Implementation Strategy
+
+## 1. Problem Understanding
+We need to build a backend system for a tiered membership program (FirstClub). Users can select a plan (duration) and a tier (benefits level). Tiers are unlocked based on user metrics (orders, total value, cohort). The system must handle subscription lifecycle (subscribe, upgrade, downgrade, cancel).
+
+## 2. Core Entities & Abstractions
+*   **User**: Represents the customer.
+    *   Fields: `id`, `name`, `email`, `totalOrders`, `totalOrderValue`, `cohortType`
+*   **Plan**: Represents the temporal aspect of membership (duration and base cost).
+    *   Fields: `id`, `name` (e.g., MONTHLY, QUARTERLY, YEARLY), `durationDays`, `basePrice`
+*   **Tier**: Represents the benefits unlocked.
+    *   Fields: `id`, `name` (e.g., SILVER, GOLD, PLATINUM), `freeDelivery`, `discountPercentage`, `earlyAccess`, `prioritySupport`, `priceMultiplier` (Final price = plan.basePrice * tier.priceMultiplier)
+*   **Subscription**: The active link binding a User to a Plan and Tier.
+    *   Fields: `id`, `userId`, `planId`, `tierId`, `startDate`, `endDate`, `status` (PENDING, ACTIVE, CANCELLED, EXPIRED), `version` (for optimistic locking to handle concurrency).
+
+## 3. Design Patterns for Extensibility
+*   **Strategy Pattern (Tier Evaluation)**: Since the criteria to unlock tiers can change (Order count > X, Value > Y, Cohort), we will use the Strategy Pattern.
+    *   Interface: `TierEvaluationStrategy` with method `boolean evaluate(User user, Tier tier)`.
+    *   Implementations: `OrderCountStrategy`, `OrderValueStrategy`, `CohortStrategy`.
+    *   Benefit: We can easily add a `ReferralStrategy` later without modifying existing evaluation code (Open/Closed Principle).
+*   **State Machine / Transition Logic**: Subscription lifecycle (PENDING, ACTIVE, CANCELLED, EXPIRED) will be strictly managed in the `SubscriptionService` to prevent invalid transitions (e.g., cancelling an already cancelled subscription).
+
+## 4. Concurrency, Validation & Best Practices
+*   **Optimistic Locking**: The `Subscription` entity will utilize JPA's `@Version` annotation. If two concurrent requests attempt to modify the same subscription (e.g., double-click on "Upgrade" or simultaneous "Upgrade" and "Cancel"), the first transaction commits, and the second throws `ObjectOptimisticLockingFailureException`, preventing inconsistent states.
+*   **Defense in Depth (Validation)**: The service layer will re-validate tier eligibility at the time of subscription creation and modification, not just relying on the catalog endpoint to prevent direct API manipulation.
+*   **Transactional Boundaries**: Crucial operations (subscribe, modify, cancel) will be wrapped in `@Transactional` to ensure atomicity.
+
+## 5. API Design
+### Catalog APIs
+*   `GET /api/v1/catalog/plans` - List available plans.
+*   `GET /api/v1/catalog/tiers` - List available tiers.
+*   `GET /api/v1/catalog/eligible-tiers/{userId}` - Returns tiers a user is allowed to subscribe to based on evaluation strategies.
+
+### Subscription APIs
+*   `POST /api/v1/subscriptions` - Create a new subscription. Payload: `{ userId, planId, tierId }`
+*   `PATCH /api/v1/subscriptions/{subId}` - Modify subscription (Upgrade/Downgrade). Payload: `{ newPlanId (optional), newTierId (optional) }`
+*   `PUT /api/v1/subscriptions/{subId}/cancel` - Cancel subscription.
+*   `GET /api/v1/subscriptions/user/{userId}` - Get active subscription details.
+
+## 6. Implementation Strategy (Spring Boot)
+1.  **Project Initialization**: Create a Spring Boot application with Web, JPA, H2 Database (for demo-ability), and Lombok.
+2.  **Domain Layer Setup**: Define Entities (`User`, `Plan`, `Tier`, `Subscription`) and Repositories.
+3.  **Core Logic Implementation**: Implement the Strategy pattern for Tier Eligibility.
+4.  **Service Layer**: Develop `SubscriptionService` handling the business logic, state transitions, defense in depth eligibility checks, and concurrency.
+5.  **API Layer**: Build REST Controllers.
+6.  **Seeding**: Add a `DataSeeder` to pre-populate Plans, Tiers, and importantly, Users with varying metrics (different order counts and values) so the eligible-tiers API dynamically demonstrates different outputs per user.

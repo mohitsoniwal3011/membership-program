@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SubscriptionController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">membership</a> &gt; <a href="index.source.html" class="el_package">com.firstclub.membership.controller</a> &gt; <span class="el_source">SubscriptionController.java</span></div><h1>SubscriptionController.java</h1><pre class="source lang-java linenums">package com.firstclub.membership.controller;
+
+import com.firstclub.membership.dto.ModifySubscriptionRequest;
+import com.firstclub.membership.dto.SubscriptionRequest;
+import com.firstclub.membership.entity.Subscription;
+import com.firstclub.membership.service.SubscriptionService;
+import com.firstclub.membership.constant.AppConstants;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
+
+import java.util.List;
+
+/**
+ * REST Controller responsible for managing the lifecycle of User Subscriptions,
+ * including subscribing, modifying (upgrading/downgrading), and cancelling.
+ */
+@RestController
+@RequestMapping(AppConstants.API_V1_SUBSCRIPTIONS)
+@RequiredArgsConstructor
+public class SubscriptionController {
+    
+    private final SubscriptionService subscriptionService;
+
+    /**
+     * Creates a new active subscription for a user.
+     * &lt;p&gt;
+     * Any previously active subscriptions for this user will be cancelled.
+     * &lt;/p&gt;
+     *
+     * @param request the payload containing user ID, selected plan ID, and selected tier ID
+     * @return the newly created {@link Subscription} entity.
+     */
+    @PostMapping
+    public Subscription createSubscription(@Valid @RequestBody SubscriptionRequest request) {
+<span class="nc" id="L36">        return subscriptionService.subscribe(request.userId(), request.planId(), request.tierId());</span>
+    }
+
+    /**
+     * Modifies an existing active subscription (e.g., upgrading to a higher tier or changing plan duration).
+     * &lt;p&gt;
+     * Defense-in-depth validates that the user is eligible for the newly requested tier.
+     * &lt;/p&gt;
+     *
+     * @param subId the ID of the subscription to modify
+     * @param request the payload containing the optional new plan ID and/or new tier ID
+     * @return the updated {@link Subscription} entity.
+     */
+    @PatchMapping(&quot;/{subId}&quot;)
+    public Subscription modifySubscription(@PathVariable Long subId, @Valid @RequestBody ModifySubscriptionRequest request) {
+<span class="nc" id="L51">        return subscriptionService.modifySubscription(subId, request.newPlanId(), request.newTierId());</span>
+    }
+
+    /**
+     * Cancels an existing active subscription.
+     *
+     * @param subId the ID of the subscription to cancel
+     * @return the updated {@link Subscription} entity reflecting the CANCELLED status.
+     */
+    @PutMapping(&quot;/{subId}/cancel&quot;)
+    public Subscription cancelSubscription(@PathVariable Long subId) {
+<span class="nc" id="L62">        return subscriptionService.cancelSubscription(subId);</span>
+    }
+
+    /**
+     * Retrieves all currently active subscriptions for a given user.
+     *
+     * @param userId the ID of the user to look up
+     * @return a list of active {@link Subscription}s belonging to the user.
+     */
+    @GetMapping(&quot;/user/{userId}&quot;)
+    public List&lt;Subscription&gt; getUserSubscriptions(@PathVariable Long userId) {
+<span class="nc" id="L73">        return subscriptionService.getActiveSubscriptionsForUser(userId);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

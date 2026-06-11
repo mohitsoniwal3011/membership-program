@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SubscriptionService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">membership</a> &gt; <a href="index.source.html" class="el_package">com.firstclub.membership.service</a> &gt; <span class="el_source">SubscriptionService.java</span></div><h1>SubscriptionService.java</h1><pre class="source lang-java linenums">package com.firstclub.membership.service;
+
+import com.firstclub.membership.entity.*;
+import com.firstclub.membership.repository.PlanRepository;
+import com.firstclub.membership.repository.SubscriptionRepository;
+import com.firstclub.membership.repository.TierRepository;
+import com.firstclub.membership.repository.UserRepository;
+import com.firstclub.membership.constant.ErrorMessages;
+import com.firstclub.membership.exception.BusinessValidationException;
+import com.firstclub.membership.exception.ResourceNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Core business service handling the lifecycle of user subscriptions.
+ * Enforces business rules, eligibility checks, and transaction boundaries.
+ */
+@Service
+@RequiredArgsConstructor
+public class SubscriptionService {
+    
+    private final SubscriptionRepository subscriptionRepository;
+    private final UserRepository userRepository;
+    private final PlanRepository planRepository;
+    private final TierRepository tierRepository;
+    private final MembershipCatalogService catalogService;
+
+    /**
+     * Subscribes a user to a selected plan and tier.
+     * Cancels any pre-existing active subscriptions the user holds.
+     *
+     * @param userId the ID of the user subscribing
+     * @param planId the ID of the chosen plan
+     * @param tierId the ID of the chosen tier
+     * @return the newly persisted {@link Subscription} in ACTIVE status
+     * @throws RuntimeException if entities are not found or user is ineligible for the tier
+     */
+    @Transactional
+    public Subscription subscribe(Long userId, Long planId, Long tierId) {
+<span class="pc" id="L45">        User user = userRepository.findById(userId).orElseThrow(() -&gt; new ResourceNotFoundException(ErrorMessages.USER_NOT_FOUND));</span>
+<span class="pc" id="L46">        Plan plan = planRepository.findById(planId).orElseThrow(() -&gt; new ResourceNotFoundException(ErrorMessages.PLAN_NOT_FOUND));</span>
+<span class="pc" id="L47">        Tier tier = tierRepository.findById(tierId).orElseThrow(() -&gt; new ResourceNotFoundException(ErrorMessages.TIER_NOT_FOUND));</span>
+
+        // Defense in depth check
+<span class="fc bfc" id="L50" title="All 2 branches covered.">        if (!catalogService.isUserEligibleForTier(user, tier)) {</span>
+<span class="fc" id="L51">            throw new BusinessValidationException(ErrorMessages.USER_NOT_ELIGIBLE_FOR_TIER + tier.getName());</span>
+        }
+
+        // Cancel any existing active subscriptions first (business logic choice)
+<span class="fc" id="L55">        List&lt;Subscription&gt; existing = subscriptionRepository.findByUserId(userId).stream()</span>
+<span class="pc bnc" id="L56" title="All 2 branches missed.">                .filter(s -&gt; s.getStatus() == SubscriptionStatus.ACTIVE)</span>
+<span class="fc" id="L57">                .toList();</span>
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">        for (Subscription sub : existing) {</span>
+<span class="nc" id="L59">            sub.cancel(); // Encapsulated OOP logic</span>
+<span class="nc" id="L60">            subscriptionRepository.save(sub);</span>
+<span class="nc" id="L61">        }</span>
+
+<span class="fc" id="L63">        Subscription subscription = Subscription.builder()</span>
+<span class="fc" id="L64">                .user(user)</span>
+<span class="fc" id="L65">                .plan(plan)</span>
+<span class="fc" id="L66">                .tier(tier)</span>
+<span class="fc" id="L67">                .startDate(LocalDate.now())</span>
+<span class="fc" id="L68">                .endDate(LocalDate.now().plusDays(plan.getDurationDays()))</span>
+<span class="fc" id="L69">                .status(SubscriptionStatus.ACTIVE)</span>
+<span class="fc" id="L70">                .build();</span>
+
+<span class="fc" id="L72">        return subscriptionRepository.save(subscription);</span>
+    }
+
+    /**
+     * Modifies an existing subscription. Can be used for Upgrades, Downgrades, or Plan extensions.
+     *
+     * @param subId     the ID of the subscription to modify
+     * @param newPlanId the optional new plan ID
+     * @param newTierId the optional new tier ID
+     * @return the updated {@link Subscription}
+     * @throws RuntimeException if subscription is inactive or user is ineligible for the new tier
+     */
+    @Transactional
+    public Subscription modifySubscription(Long subId, Long newPlanId, Long newTierId) {
+<span class="nc bnc" id="L86" title="All 4 branches missed.">        if (newPlanId == null &amp;&amp; newTierId == null) {</span>
+<span class="nc" id="L87">            throw new BusinessValidationException(&quot;Both newPlanId and newTierId cannot be null.&quot;);</span>
+        }
+
+<span class="nc" id="L90">        Subscription subscription = subscriptionRepository.findById(subId)</span>
+<span class="nc" id="L91">                .orElseThrow(() -&gt; new ResourceNotFoundException(ErrorMessages.SUBSCRIPTION_NOT_FOUND));</span>
+
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        if (subscription.getStatus() != SubscriptionStatus.ACTIVE) {</span>
+<span class="nc" id="L94">            throw new BusinessValidationException(ErrorMessages.ONLY_ACTIVE_SUBS_MODIFIABLE);</span>
+        }
+
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        if (newPlanId != null) {</span>
+<span class="nc" id="L98">            Plan plan = planRepository.findById(newPlanId).orElseThrow(() -&gt; new ResourceNotFoundException(ErrorMessages.PLAN_NOT_FOUND));</span>
+<span class="nc" id="L99">            subscription.updatePlan(plan); // Encapsulated OOP logic</span>
+        }
+
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        if (newTierId != null) {</span>
+<span class="nc" id="L103">            Tier tier = tierRepository.findById(newTierId).orElseThrow(() -&gt; new ResourceNotFoundException(ErrorMessages.TIER_NOT_FOUND));</span>
+            // Defense in depth check
+<span class="nc bnc" id="L105" title="All 2 branches missed.">            if (!catalogService.isUserEligibleForTier(subscription.getUser(), tier)) {</span>
+<span class="nc" id="L106">                throw new BusinessValidationException(ErrorMessages.USER_NOT_ELIGIBLE_FOR_TIER + tier.getName());</span>
+            }
+<span class="nc" id="L108">            subscription.updateTier(tier); // Encapsulated OOP logic</span>
+        }
+
+<span class="nc" id="L111">        return subscriptionRepository.save(subscription);</span>
+    }
+
+    /**
+     * Cancels an active subscription.
+     *
+     * @param subId the ID of the subscription to cancel
+     * @return the updated {@link Subscription} in CANCELLED status
+     * @throws RuntimeException if the subscription is already cancelled or not found
+     */
+    @Transactional
+    public Subscription cancelSubscription(Long subId) {
+<span class="nc" id="L123">        Subscription subscription = subscriptionRepository.findById(subId)</span>
+<span class="nc" id="L124">                .orElseThrow(() -&gt; new ResourceNotFoundException(ErrorMessages.SUBSCRIPTION_NOT_FOUND));</span>
+        
+<span class="nc" id="L126">        subscription.cancel(); // Encapsulated OOP logic</span>
+<span class="nc" id="L127">        return subscriptionRepository.save(subscription);</span>
+    }
+
+    /**
+     * Retrieves all active subscriptions associated with a specific user.
+     *
+     * @param userId the ID of the user
+     * @return a list of ACTIVE {@link Subscription} entities for the user
+     */
+    public List&lt;Subscription&gt; getActiveSubscriptionsForUser(Long userId) {
+<span class="nc" id="L137">        return subscriptionRepository.findByUserId(userId).stream()</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">                .filter(s -&gt; s.getStatus() == SubscriptionStatus.ACTIVE)</span>
+<span class="nc" id="L139">                .collect(Collectors.toList());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

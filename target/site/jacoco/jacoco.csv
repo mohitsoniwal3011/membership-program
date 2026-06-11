@@ -1,0 +1,17 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+membership,com.firstclub.membership.service,MembershipCatalogService,13,40,0,0,2,8,3,4,3,4
+membership,com.firstclub.membership.service,SubscriptionService,162,78,17,3,25,18,21,2,12,1
+membership,com.firstclub.membership.strategy,CohortStrategy,0,14,0,2,0,4,0,3,0,2
+membership,com.firstclub.membership.strategy,OrderValueStrategy,0,21,1,5,0,3,1,4,0,2
+membership,com.firstclub.membership.strategy,OrderCountStrategy,0,22,1,5,0,3,1,4,0,2
+membership,com.firstclub.membership.controller,MembershipCatalogController,13,0,0,0,3,0,3,0,3,0
+membership,com.firstclub.membership.controller,SubscriptionController,29,0,0,0,4,0,4,0,4,0
+membership,com.firstclub.membership,MembershipApplication,8,0,0,0,3,0,2,0,2,0
+membership,com.firstclub.membership.exception,BusinessValidationException,0,4,0,0,0,2,0,1,0,1
+membership,com.firstclub.membership.exception,GlobalExceptionHandler,84,0,0,0,15,0,8,0,8,0
+membership,com.firstclub.membership.exception,ResourceNotFoundException,4,0,0,0,2,0,1,0,1,0
+membership,com.firstclub.membership.entity,Subscription,47,0,6,0,13,0,6,0,3,0
+membership,com.firstclub.membership.entity,SubscriptionStatus,0,27,0,0,0,5,0,1,0,1
+membership,com.firstclub.membership.dto,ModifySubscriptionRequest,9,0,0,0,1,0,1,0,1,0
+membership,com.firstclub.membership.dto,SubscriptionRequest,12,0,0,0,1,0,1,0,1,0
+membership,com.firstclub.membership.config,DataSeeder,228,0,2,0,32,0,3,0,2,0

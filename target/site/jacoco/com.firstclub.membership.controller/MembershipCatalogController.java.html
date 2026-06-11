@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MembershipCatalogController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">membership</a> &gt; <a href="index.source.html" class="el_package">com.firstclub.membership.controller</a> &gt; <span class="el_source">MembershipCatalogController.java</span></div><h1>MembershipCatalogController.java</h1><pre class="source lang-java linenums">package com.firstclub.membership.controller;
+
+import com.firstclub.membership.entity.Plan;
+import com.firstclub.membership.entity.Tier;
+import com.firstclub.membership.service.MembershipCatalogService;
+import com.firstclub.membership.constant.AppConstants;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+/**
+ * REST Controller responsible for providing public and user-specific catalog information 
+ * regarding available membership plans and tiers.
+ */
+@RestController
+@RequestMapping(AppConstants.API_V1_CATALOG)
+@RequiredArgsConstructor
+public class MembershipCatalogController {
+    
+    private final MembershipCatalogService catalogService;
+
+    /**
+     * Retrieves all available membership plans (e.g., Monthly, Quarterly, Yearly).
+     *
+     * @return a list of all {@link Plan} entities.
+     */
+    @GetMapping(&quot;/plans&quot;)
+    public List&lt;Plan&gt; getPlans() {
+<span class="nc" id="L33">        return catalogService.getAllPlans();</span>
+    }
+
+    /**
+     * Retrieves all available membership tiers and their default benefits.
+     * Note: This does not take into account whether a specific user is eligible for them.
+     *
+     * @return a list of all {@link Tier} entities.
+     */
+    @GetMapping(&quot;/tiers&quot;)
+    public List&lt;Tier&gt; getTiers() {
+<span class="nc" id="L44">        return catalogService.getAllTiers();</span>
+    }
+
+    /**
+     * Retrieves the specific membership tiers that a given user is eligible to subscribe to,
+     * based on their historical metrics evaluated against the Strategy rules.
+     *
+     * @param userId the ID of the user requesting their eligible tiers
+     * @return a list of {@link Tier} entities the user is allowed to select.
+     */
+    @GetMapping(&quot;/eligible-tiers/{userId}&quot;)
+    public List&lt;Tier&gt; getEligibleTiers(@PathVariable Long userId) {
+<span class="nc" id="L56">        return catalogService.getEligibleTiersForUser(userId);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

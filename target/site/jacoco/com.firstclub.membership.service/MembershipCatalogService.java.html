@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MembershipCatalogService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">membership</a> &gt; <a href="index.source.html" class="el_package">com.firstclub.membership.service</a> &gt; <span class="el_source">MembershipCatalogService.java</span></div><h1>MembershipCatalogService.java</h1><pre class="source lang-java linenums">package com.firstclub.membership.service;
+
+import com.firstclub.membership.entity.Plan;
+import com.firstclub.membership.entity.Tier;
+import com.firstclub.membership.entity.User;
+import com.firstclub.membership.repository.PlanRepository;
+import com.firstclub.membership.repository.TierRepository;
+import com.firstclub.membership.repository.UserRepository;
+import com.firstclub.membership.strategy.TierEvaluationStrategy;
+import com.firstclub.membership.constant.ErrorMessages;
+import com.firstclub.membership.exception.ResourceNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Service responsible for managing membership catalog queries such as retrieving
+ * available plans, tiers, and determining tier eligibility for specific users.
+ */
+@Service
+@RequiredArgsConstructor
+public class MembershipCatalogService {
+    
+    private final PlanRepository planRepository;
+    private final TierRepository tierRepository;
+    private final UserRepository userRepository;
+    
+    /**
+     * The list of injected strategies that govern tier unlocking rules.
+     */
+    private final List&lt;TierEvaluationStrategy&gt; strategies;
+
+    /**
+     * Retrieves all available membership plans from the database.
+     *
+     * @return a list of {@link Plan}s
+     */
+    public List&lt;Plan&gt; getAllPlans() {
+<span class="nc" id="L41">        return planRepository.findAll();</span>
+    }
+
+    /**
+     * Retrieves all defined membership tiers from the database.
+     *
+     * @return a list of {@link Tier}s
+     */
+    public List&lt;Tier&gt; getAllTiers() {
+<span class="nc" id="L50">        return tierRepository.findAll();</span>
+    }
+
+    /**
+     * Retrieves only the tiers that a given user is eligible to unlock.
+     *
+     * @param userId the ID of the user to evaluate
+     * @return a list of {@link Tier}s the user satisfies the criteria for
+     * @throws RuntimeException if the user cannot be found
+     */
+    public List&lt;Tier&gt; getEligibleTiersForUser(Long userId) {
+<span class="fc" id="L61">        User user = userRepository.findById(userId)</span>
+<span class="pc" id="L62">                .orElseThrow(() -&gt; new ResourceNotFoundException(ErrorMessages.USER_NOT_FOUND));</span>
+        
+<span class="fc" id="L64">        List&lt;Tier&gt; allTiers = tierRepository.findAll();</span>
+        
+<span class="fc" id="L66">        return allTiers.stream()</span>
+<span class="fc" id="L67">                .filter(tier -&gt; isUserEligibleForTier(user, tier))</span>
+<span class="fc" id="L68">                .collect(Collectors.toList());</span>
+    }
+
+    /**
+     * Evaluates whether a user is eligible for a specific tier by applying
+     * all registered {@link TierEvaluationStrategy} instances. 
+     * The user must satisfy ALL constraints.
+     *
+     * @param user the user attempting to access the tier
+     * @param tier the tier being evaluated
+     * @return true if the user passes all strategy checks; false otherwise
+     */
+    public boolean isUserEligibleForTier(User user, Tier tier) {
+<span class="fc" id="L81">        return strategies.stream()</span>
+<span class="fc" id="L82">                .allMatch(strategy -&gt; strategy.isEligible(user, tier));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

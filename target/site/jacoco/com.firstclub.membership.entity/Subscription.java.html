@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Subscription.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">membership</a> &gt; <a href="index.source.html" class="el_package">com.firstclub.membership.entity</a> &gt; <span class="el_source">Subscription.java</span></div><h1>Subscription.java</h1><pre class="source lang-java linenums">package com.firstclub.membership.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Version;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.time.LocalDate;
+
+import com.firstclub.membership.exception.BusinessValidationException;
+import com.firstclub.membership.constant.ErrorMessages;
+
+/**
+ * Represents a User's active or past subscription to a Membership Plan and Tier.
+ * &lt;p&gt;
+ * This is the central associative entity linking a User to their chosen benefits.
+ * Employs optimistic locking via the @Version field to prevent concurrent modification issues.
+ * &lt;/p&gt;
+ */
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Subscription {
+
+    /**
+     * Unique identifier for the Subscription.
+     */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /**
+     * The user who owns the subscription.
+     */
+    @ManyToOne
+    @JoinColumn(name = &quot;user_id&quot;)
+    private User user;
+
+    /**
+     * The selected membership plan (duration/base price).
+     */
+    @ManyToOne
+    @JoinColumn(name = &quot;plan_id&quot;)
+    private Plan plan;
+
+    /**
+     * The selected membership tier (benefits level).
+     */
+    @ManyToOne
+    @JoinColumn(name = &quot;tier_id&quot;)
+    private Tier tier;
+
+    /**
+     * The date the subscription commenced.
+     */
+    private LocalDate startDate;
+
+    /**
+     * The date the subscription expires or ends.
+     */
+    private LocalDate endDate;
+
+    /**
+     * The current lifecycle status of the subscription.
+     */
+    @Enumerated(EnumType.STRING)
+    private SubscriptionStatus status;
+
+    /**
+     * Version field used by JPA for Optimistic Locking to handle concurrent requests gracefully.
+     */
+    @Version
+    private Long version;
+
+    /**
+     * Cancels the subscription if it is not already cancelled.
+     * Demonstrates OOP Encapsulation by hiding state transitions inside the domain model.
+     *
+     * @throws BusinessValidationException if already cancelled
+     */
+    public void cancel() {
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (this.status == SubscriptionStatus.CANCELLED) {</span>
+<span class="nc" id="L93">            throw new BusinessValidationException(ErrorMessages.SUBSCRIPTION_ALREADY_CANCELLED);</span>
+        }
+<span class="nc" id="L95">        this.status = SubscriptionStatus.CANCELLED;</span>
+<span class="nc" id="L96">    }</span>
+
+    /**
+     * Updates the plan and recalculates the end date.
+     *
+     * @param newPlan the new plan to apply
+     * @throws BusinessValidationException if the subscription is not active
+     */
+    public void updatePlan(Plan newPlan) {
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        if (this.status != SubscriptionStatus.ACTIVE) {</span>
+<span class="nc" id="L106">            throw new BusinessValidationException(ErrorMessages.ONLY_ACTIVE_SUBS_MODIFIABLE);</span>
+        }
+<span class="nc" id="L108">        this.plan = newPlan;</span>
+<span class="nc" id="L109">        this.endDate = LocalDate.now().plusDays(newPlan.getDurationDays());</span>
+<span class="nc" id="L110">    }</span>
+
+    /**
+     * Updates the tier.
+     *
+     * @param newTier the new tier to apply
+     * @throws BusinessValidationException if the subscription is not active
+     */
+    public void updateTier(Tier newTier) {
+<span class="nc bnc" id="L119" title="All 2 branches missed.">        if (this.status != SubscriptionStatus.ACTIVE) {</span>
+<span class="nc" id="L120">            throw new BusinessValidationException(ErrorMessages.ONLY_ACTIVE_SUBS_MODIFIABLE);</span>
+        }
+<span class="nc" id="L122">        this.tier = newTier;</span>
+<span class="nc" id="L123">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
